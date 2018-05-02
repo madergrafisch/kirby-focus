@@ -20,52 +20,51 @@ class Focus {
   }
 
 
+  public static function mapToRange($value, $in_min, $in_max, $out_min, $out_max ) {
+    return ($value - $in_min) * ($out_max - $out_min) / ($in_max - $in_min) + $out_min;
+  }
+
+
   /**
    * Calculates crop coordinates and width/height to crop and resize the original image
    */
   public static function cropValues($thumb) {
     // get original image dimensions
     $dimensions = clone $thumb->source->dimensions();
+    $zoomfactor = static::mapToRange($thumb->options['zoom'], 0, 100, 1, 0.1);
 
     // calculate new height for original image based crop ratio
     if ($thumb->options['fit'] == 'width') {
       $width  = $dimensions->width();
       $height = floor($dimensions->width() / $thumb->options['ratio']);
-
-      $heightHalf = floor($height / 2);
-
-      // calculate focus for original image
-      $focusX = floor($width * 0.5);
-      $focusY = floor($dimensions->height() * $thumb->options['focusY']);
-
-      $x1 = 0;
-      $y1 = $focusY - $heightHalf;
-
-      // $y1 off canvas?
-      $y1 = ($y1 < 0) ? 0 : $y1;
-      $y1 = ($y1 + $height > $dimensions->height()) ? $dimensions->height() - $height : $y1;
-
     }
 
     // calculate new width for original image based crop ratio
     if ($thumb->options['fit'] == 'height') {
       $width  = $dimensions->height() * $thumb->options['ratio'];
       $height = $dimensions->height();
-
-      $widthHalf = floor($width / 2);
-
-      // calculate focus for original image
-      $focusX = floor($dimensions->width() * $thumb->options['focusX']);
-      $focusY = $height * 0.5;
-
-      $x1 = $focusX - $widthHalf;
-      $y1 = 0;
-
-      // $x1 off canvas?
-      $x1 = ($x1 < 0) ? 0 : $x1;
-      $x1 = ($x1 + $width > $dimensions->width()) ? $dimensions->width() - $width : $x1;
-
     }
+
+    $width *=  $zoomfactor;
+    $height *=  $zoomfactor;
+
+    $widthHalf = floor($width / 2);
+    $heightHalf = floor($height / 2);
+
+    // calculate focus for original image
+    $focusX = floor($dimensions->width() * $thumb->options['focusX']);
+    $focusY = floor($dimensions->height() * $thumb->options['focusY']);
+
+    $x1 = $focusX - $widthHalf;
+    $y1 = $focusY - $heightHalf;
+
+    // $y1 off canvas?
+    $y1 = ($y1 < 0) ? 0 : $y1;
+    $y1 = ($y1 + $height > $dimensions->height()) ? $dimensions->height() - $height : $y1;
+
+    // $x1 off canvas?
+    $x1 = ($x1 < 0) ? 0 : $x1;
+    $x1 = ($x1 + $width > $dimensions->width()) ? $dimensions->width() - $width : $x1;
 
     $x2 = floor($x1 + $width);
     $y2 = floor($y1 + $height);
@@ -78,6 +77,22 @@ class Focus {
       'width' => floor($width),
       'height' => floor($height),
     );
+  }
+
+
+  /**
+   * Get the stored zoom value
+   */
+  public static function zoom($file) {
+    $zoom = 0;
+
+    $zoomFieldKey = c::get('focus.zoom.field.key', 'zoom');
+
+    if ($file->$zoomFieldKey()->isNotEmpty()) {
+      $zoom = $file->$zoomFieldKey()->value();
+    }
+
+    return $zoom;
   }
 
 

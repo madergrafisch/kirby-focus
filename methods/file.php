@@ -41,6 +41,9 @@ file::$methods['focusCrop'] = function($file, $width, $height = null, $params = 
     }
   }
 
+  // set default zoom if not defined
+  $params['zoom'] = !empty($params['zoom']) ? $params['zoom'] : focus::zoom($file); // 0-100
+
   $params['width'] = $width;
 
   // if no height is given use width to crop a square
@@ -62,6 +65,7 @@ file::$methods['focusCrop'] = function($file, $width, $height = null, $params = 
   }
 
   $params['focus'] = TRUE;
+  $params['crop'] = TRUE;   // set to true to trick isObsolete function of toolkit/thumbs create method
   $params['ratio'] = $ratioThumb;
 
   // if forced coordinate is set, use it - otherwise look at file field values or use center as default
@@ -69,7 +73,7 @@ file::$methods['focusCrop'] = function($file, $width, $height = null, $params = 
   $params['focusY'] = (!empty($params['focusY'])) ? focus::numberFormat($params['focusY']) : focus::coordinates($file, 'y');
 
   // create base filename
-  $params['filename'] = '{safeName}-' . $params['width'] . 'x' . $params['height'] . '-' . $params['focusX']*100 . '-' . $params['focusY']*100;
+  $params['filename'] = '{safeName}-' . $params['width'] . 'x' . $params['height'] . '-' . $params['focusX']*100 . '-' . $params['focusY']*100 . '-' . $params['zoom'];
 
   // quality
   if (isset($params['quality']) && is_numeric($params['quality'])) {
